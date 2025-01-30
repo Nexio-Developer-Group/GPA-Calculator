@@ -2,52 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>University Course Selection</title>
+    
+    <!-- Bootstrap 5 & Animate.css -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+
     <style>
-        /* Style for scrollable container */
-        #optional-subjects-container {
-            max-height: 200px; /* Set the max height of the container */
-            overflow-y: auto;  /* Enable vertical scrolling */
-            margin-bottom: 20px; /* Add margin below the container */
-            border: 1px solid #ccc; /* Optional: Add border for styling */
-            padding: 10px; /* Optional: Add padding for better spacing */
+        body {
+            background-color: #f8f9fa;
         }
-
-        /* Style for each optional subject checkbox container */
-        #optional-subjects {
-            display: flex;
-            flex-direction: column;
+        .container {
+            max-width: 800px;
+            margin-top: 30px;
         }
-
-        #optional-subjects div {
-            margin-bottom: 5px;
+        .scrollable-container {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            background: #fff;
+        }
+        .grade-select {
+            width: 100%;
         }
     </style>
 </head>
 <body>
-    <h2>select Department, Program, Minor, and Semester</h2>
 
-    <!-- Dropdowns for UBPM Selection -->
-    <label for="ubpm">Select Department & Program:</label>
-    <select id="ubpm" onchange="enableSemesterSelection()">
-        <option value="">-- Select --</option>
-    </select>
+<div class="container">
+    <h2 class="text-center mb-4 animate__animated animate__fadeInDown">
+        <i class="bi bi-mortarboard"></i> University Course Selection
+    </h2>
 
-    <br><br>
+    <!-- Department & Program Selection -->
+    <div class="mb-3">
+        <label for="ubpm" class="form-label">Select Department & Program:</label>
+        <select id="ubpm" class="form-select" onchange="enableSemesterSelection()">
+            <option value="">-- Select --</option>
+        </select>
+    </div>
 
-    <!-- Dropdown for Semester (1-8) -->
-    <label for="semester">Select Semester:</label>
-    <select id="semester" disabled onchange="fetchSubjects()">
-        <option value="">-- Select Semester --</option>
-    </select>
+    <!-- Semester Selection -->
+    <div class="mb-3">
+        <label for="semester" class="form-label">Select Semester:</label>
+        <select id="semester" class="form-select" disabled onchange="fetchSubjects()">
+            <option value="">-- Select Semester --</option>
+        </select>
+    </div>
 
-    <br><br>
-
-    <!-- Subjects List -->
+    <!-- Subjects Table -->
     <h3>Subjects & Grade Input</h3>
-    <table border="1">
-        <thead>
+    <table class="table table-bordered text-center">
+        <thead class="table-dark">
             <tr>
                 <th>Subject</th>
                 <th>Credits</th>
@@ -57,20 +67,19 @@
         <tbody id="subject-table"></tbody>
     </table>
 
-    <br>
-
-    <!-- Scrollable Container for Optional Subjects -->
+    <!-- Optional Subjects -->
     <h3>Select Optional Subjects</h3>
-    <div id="optional-subjects-container">
-        <div id="optional-subjects">
-            <!-- Dynamic checkbox options will be appended here -->
-        </div>
+    <div class="scrollable-container mb-3">
+        <div id="optional-subjects"></div>
     </div>
-    <button onclick="addOptionalSubjects()">Apply</button>
+    <button class="btn btn-primary w-100 animate__animated animate__fadeInUp" onclick="addOptionalSubjects()">
+        <i class="bi bi-check-lg"></i> Apply
+    </button>
 
+    <!-- Optional Subjects Table -->
     <h3>Optional Subjects & Grade Input</h3>
-    <table border="1">
-        <thead>
+    <table class="table table-bordered text-center">
+        <thead class="table-dark">
             <tr>
                 <th>Subject</th>
                 <th>Credits</th>
@@ -80,168 +89,137 @@
         <tbody id="optional-subject-table"></tbody>
     </table>
 
-    <br>
-    <button onclick="calculateCGPA()">Calculate CGPA</button>
-    <h3>CGPA: <span id="cgpa-result">-</span></h3>
+    <!-- CGPA Calculation -->
+    <button class="btn btn-success w-100 my-3 animate__animated animate__pulse animate__infinite" onclick="calculateCGPA()">
+        <i class="bi bi-calculator"></i> Calculate CGPA
+    </button>
 
-    <script>
-        let selectedUBPM_ID = null;
-        let subjects = [];
-        let optionalSubjects = [];
+    <h3 class="text-center">
+        Your CGPA: <span id="cgpa-result" class="fw-bold text-primary">-</span>
+    </h3>
+</div>
 
-        // Grade mapping for CGPA calculation
-        const gradePointsMap = {
-            "O": 10,
-            "A+": 9,
-            "A": 8,
-            "B+": 7,
-            "B": 6,
-            "C": 5,
-            "F": 0
-        };
+<!-- Bootstrap & Script -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let selectedUBPM_ID = null;
+    let subjects = [];
+    let optionalSubjects = [];
 
-        // Fetch UBPM Data
-        function fetchUBPM() {
-            fetch('http://localhost:5000/api/ubpm')
-                .then(response => response.json())
-                .then(data => {
-                    const ubpmDropdown = document.getElementById("ubpm");
-                    data.forEach(item => {
-                        const option = document.createElement("option");
-                        option.value = item.UBPM_ID;
-                        option.textContent = `${item.department} - ${item.program} (${item.minor || "No Minor"})`;
-                        ubpmDropdown.appendChild(option);
-                    });
+    const gradePointsMap = {
+        "O": 10, "A+": 9, "A": 8, "B+": 7, "B": 6, "C": 5, "F": 0
+    };
+
+    function fetchUBPM() {
+        fetch('http://localhost:5000/api/ubpm')
+            .then(response => response.json())
+            .then(data => {
+                const ubpmDropdown = document.getElementById("ubpm");
+                data.forEach(item => {
+                    const option = document.createElement("option");
+                    option.value = item.UBPM_ID;
+                    option.textContent = `${item.department} - ${item.program} (${item.minor || "No Minor"})`;
+                    ubpmDropdown.appendChild(option);
                 });
-        }
+            });
+    }
 
-        // Enable Semester Selection
-        function enableSemesterSelection() {
-            selectedUBPM_ID = document.getElementById("ubpm").value;
-            document.getElementById("semester").disabled = !selectedUBPM_ID;
-        }
+    function enableSemesterSelection() {
+        selectedUBPM_ID = document.getElementById("ubpm").value;
+        document.getElementById("semester").disabled = !selectedUBPM_ID;
+    }
 
-        // Populate Semester Dropdown (Static 1 to 8)
-        function populateSemesters() {
-            const semesterDropdown = document.getElementById("semester");
-            for (let i = 1; i <= 8; i++) {
-                const option = document.createElement("option");
-                option.value = i;
-                option.textContent = `Semester ${i}`;
-                semesterDropdown.appendChild(option);
+    function populateSemesters() {
+        const semesterDropdown = document.getElementById("semester");
+        for (let i = 1; i <= 8; i++) {
+            const option = document.createElement("option");
+            option.value = i;
+            option.textContent = `Semester ${i}`;
+            semesterDropdown.appendChild(option);
+        }
+    }
+
+    function fetchSubjects() {
+        const semester = document.getElementById("semester").value;
+        if (!selectedUBPM_ID || !semester) return;
+
+        fetch(`http://localhost:5000/api/subjects/${selectedUBPM_ID}/${semester}`)
+            .then(response => response.json())
+            .then(data => {
+                subjects = data;
+                updateSubjectTable("subject-table", subjects);
+            });
+    }
+
+    function fetchOptionalSubjects() {
+        fetch('http://localhost:5000/api/opt-subjects')
+            .then(response => response.json())
+            .then(data => {
+                const optionalSubjectsDiv = document.getElementById("optional-subjects");
+                optionalSubjectsDiv.innerHTML = "";
+                data.forEach(subject => {
+                    const div = document.createElement("div");
+                    div.classList.add("form-check");
+
+                    const checkbox = document.createElement("input");
+                    checkbox.type = "checkbox";
+                    checkbox.className = "form-check-input";
+                    checkbox.value = JSON.stringify(subject);
+                    checkbox.name = "optionalSubject";
+
+                    const label = document.createElement("label");
+                    label.className = "form-check-label";
+                    label.textContent = subject.subject_name;
+
+                    div.appendChild(checkbox);
+                    div.appendChild(label);
+                    optionalSubjectsDiv.appendChild(div);
+                });
+            });
+    }
+
+    function addOptionalSubjects() {
+        const checkboxes = document.querySelectorAll('input[name="optionalSubject"]:checked');
+        optionalSubjects = [];
+        checkboxes.forEach(checkbox => {
+            optionalSubjects.push(JSON.parse(checkbox.value));
+        });
+        updateSubjectTable("optional-subject-table", optionalSubjects);
+    }
+
+    function updateSubjectTable(tableId, subjectList) {
+        const table = document.getElementById(tableId);
+        table.innerHTML = "";
+        subjectList.forEach(subject => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${subject.subject_name}</td>
+                <td>${subject.subject_cred}</td>
+                <td><select class="form-select grade-select">
+                    <option value="">-- Select Grade --</option>
+                    ${Object.keys(gradePointsMap).map(grade => `<option value="${grade}">${grade} (${gradePointsMap[grade]})</option>`).join('')}
+                </select></td>
+            `;
+            table.appendChild(row);
+        });
+    }
+
+    function calculateCGPA() {
+        let totalPoints = 0, totalCredits = 0;
+        document.querySelectorAll(".grade-select").forEach((select, i) => {
+            const grade = select.value;
+            if (grade) {
+                totalPoints += gradePointsMap[grade] * (i < subjects.length ? subjects[i].subject_cred : optionalSubjects[i - subjects.length].subject_cred);
+                totalCredits += (i < subjects.length ? subjects[i].subject_cred : optionalSubjects[i - subjects.length].subject_cred);
             }
-        }
+        });
 
-        // Fetch Subjects
-        function fetchSubjects() {
-            const semester = document.getElementById("semester").value;
-            if (!selectedUBPM_ID || !semester) return;
+        document.getElementById("cgpa-result").textContent = totalCredits ? (totalPoints / totalCredits).toFixed(2) : "-";
+    }
 
-            fetch(`http://localhost:5000/api/subjects/${selectedUBPM_ID}/${semester}`)
-                .then(response => response.json())
-                .then(data => {
-                    subjects = data;
-                    updateSubjectTable("subject-table", subjects);
-                });
-        }
-
-        // Fetch Optional Subjects
-        function fetchOptionalSubjects() {
-            fetch('http://localhost:5000/api/opt-subjects')
-                .then(response => response.json())
-                .then(data => {
-                    const optionalSubjectsDiv = document.getElementById("optional-subjects");
-                    optionalSubjectsDiv.innerHTML = ""; // Clear previous checkboxes
-
-                    data.forEach(subject => {
-                        const label = document.createElement("label");
-                        label.textContent = subject.subject_name;
-
-                        const checkbox = document.createElement("input");
-                        checkbox.type = "checkbox";
-                        checkbox.value = JSON.stringify(subject);
-                        checkbox.name = "optionalSubject";
-
-                        const div = document.createElement("div");
-                        div.appendChild(checkbox);
-                        div.appendChild(label);
-                        optionalSubjectsDiv.appendChild(div);
-                    });
-                });
-        }
-
-        // Add Selected Optional Subjects
-        function addOptionalSubjects() {
-            const checkboxes = document.querySelectorAll('input[name="optionalSubject"]:checked');
-            
-            // Clear previous optional subjects from the table before adding new ones
-            optionalSubjects = [];
-
-            // Collect selected optional subjects
-            for (let i = 0; i < checkboxes.length; i++) {
-                const subject = JSON.parse(checkboxes[i].value);
-                optionalSubjects.push(subject);
-            }
-            updateSubjectTable("optional-subject-table", optionalSubjects);
-        }
-
-        // Update Subject Table (For Regular or Optional Subjects)
-        function updateSubjectTable(tableId, subjectList) {
-            const table = document.getElementById(tableId);
-            table.innerHTML = "";
-            subjectList.forEach(subject => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${subject.subject_name}</td>
-                    <td>${subject.subject_cred}</td>
-                    <td><select class="grade-input">
-                        <option value="">-- Select Grade --</option>
-                        <option value="O">O (10)</option>
-                        <option value="A+">A+ (9)</option>
-                        <option value="A">A (8)</option>
-                        <option value="B+">B+ (7)</option>
-                        <option value="B">B (6)</option>
-                        <option value="C">C (5)</option>
-                        <option value="F">F (0)</option>
-                    </select></td>
-                `;
-                table.appendChild(row);
-            });
-        }
-
-        // Calculate CGPA
-        function calculateCGPA() {
-            const gradeInputs = document.querySelectorAll(".grade-input");
-            let totalPoints = 0;
-            let totalCredits = 0;
-
-            // Calculate for regular subjects
-            subjects.forEach((subject, index) => {
-                const grade = gradeInputs[index].value;
-                if (grade) {
-                    const gradePoints = gradePointsMap[grade.toUpperCase()] || 0;
-                    totalPoints += gradePoints * subject.subject_cred;
-                    totalCredits += subject.subject_cred;
-                }
-            });
-
-            // Calculate for optional subjects
-            optionalSubjects.forEach((subject, index) => {
-                const grade = gradeInputs[subjects.length + index].value;
-                if (grade) {
-                    const gradePoints = gradePointsMap[grade.toUpperCase()] || 0;
-                    totalPoints += gradePoints * subject.subject_cred;
-                    totalCredits += subject.subject_cred;
-                }
-            });
-
-            const cgpa = totalCredits ? (totalPoints / totalCredits).toFixed(2) : 0;
-            document.getElementById("cgpa-result").textContent = cgpa;
-        }
-
-        fetchUBPM();
-        populateSemesters();
-        fetchOptionalSubjects();
-    </script>
+    fetchUBPM();
+    populateSemesters();
+    fetchOptionalSubjects();
+</script>
 </body>
 </html>
