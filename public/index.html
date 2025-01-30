@@ -26,20 +26,42 @@
     </style>
 </head>
 <body>
-    <h2>select Department, Program, Minor, and Semester</h2>
+    <h2>Select Department, Program, Minor, and Semester</h2>
 
-    <!-- Dropdowns for UBPM Selection -->
-    <label for="ubpm">Select Department & Program:</label>
-    <select id="ubpm" onchange="enableSemesterSelection()">
-        <option value="">-- Select --</option>
+    <!-- Dropdowns for Department, Program, and Minor Selection -->
+    <label for="department">Select Department:</label>
+    <select id="department" onchange="updatePrograms()">
+        <option value="">-- Select Department --</option>
     </select>
 
     <br><br>
 
-    <!-- Dropdown for Semester (1-8) -->
+    <label for="program">Select Program:</label>
+    <select id="program" onchange="updateMinors()" disabled>
+        <option value="">-- Select Program --</option>
+    </select>
+
+    <br><br>
+
+    <label for="minor">Select Minor:</label>
+    <select id="minor" onchange="enableSemesterSelection()" disabled>
+        <option value="">-- Select Minor --</option>
+    </select>
+
+    <br><br>
+
+    <!-- Static Dropdown for Semester (1-8) -->
     <label for="semester">Select Semester:</label>
     <select id="semester" disabled onchange="fetchSubjects()">
         <option value="">-- Select Semester --</option>
+        <option value="1">Semester 1</option>
+        <option value="2">Semester 2</option>
+        <option value="3">Semester 3</option>
+        <option value="4">Semester 4</option>
+        <option value="5">Semester 5</option>
+        <option value="6">Semester 6</option>
+        <option value="7">Semester 7</option>
+        <option value="8">Semester 8</option>
     </select>
 
     <br><br>
@@ -85,9 +107,13 @@
     <h3>CGPA: <span id="cgpa-result">-</span></h3>
 
     <script>
-        let selectedUBPM_ID = null;
+        let selectedDepartment = null;
+        let selectedProgram = null;
+        let selectedMinor = null;
+        let selectedUBPMID = null;  // Store the UBPM ID
         let subjects = [];
         let optionalSubjects = [];
+        let ubpmData = [];
 
         // Grade mapping for CGPA calculation
         const gradePointsMap = {
@@ -105,44 +131,127 @@
             fetch('http://localhost:5000/api/ubpm')
                 .then(response => response.json())
                 .then(data => {
-                    const ubpmDropdown = document.getElementById("ubpm");
-                    data.forEach(item => {
-                        const option = document.createElement("option");
-                        option.value = item.UBPM_ID;
-                        option.textContent = `${item.department} - ${item.program} (${item.minor || "No Minor"})`;
-                        ubpmDropdown.appendChild(option);
-                    });
+                    ubpmData = data;
+                    populateDepartments();
                 });
+        }
+
+        // Populate Departments Dropdown
+        function populateDepartments() {
+            const departmentDropdown = document.getElementById("department");
+            const departments = [...new Set(ubpmData.map(item => item.department))];
+            departments.forEach(department => {
+                const option = document.createElement("option");
+                option.value = department;
+                option.textContent = department;
+                departmentDropdown.appendChild(option);
+            });
+        }
+
+        // Update Programs Dropdown based on selected Department
+        function updatePrograms() {
+            selectedDepartment = document.getElementById("department").value;
+            const programDropdown = document.getElementById("program");
+            programDropdown.innerHTML = "<option value=''>-- Select Program --</option>"; // Reset programs
+
+            if (!selectedDepartment) {
+                programDropdown.disabled = true;
+                document.getElementById("minor").disabled = true;
+                document.getElementById("semester").disabled = true;
+                return;
+            }
+
+            programDropdown.disabled = false;
+            const programs = ubpmData.filter(item => item.department === selectedDepartment);
+            const programSet = [...new Set(programs.map(item => item.program))];
+            
+            programSet.forEach(program => {
+                const option = document.createElement("option");
+                option.value = program;
+                option.textContent = program;
+                programDropdown.appendChild(option);
+            });
+        }
+
+        // Update Minors Dropdown based on selected Program
+        function updateMinors() {
+            selectedProgram = document.getElementById("program").value;
+            const minorDropdown = document.getElementById("minor");
+            minorDropdown.innerHTML = "<option value=''>-- Select Minor --</option>"; // Reset minors
+
+            if (!selectedProgram) {
+                minorDropdown.disabled = true;
+                document.getElementById("semester").disabled = true;
+                return;
+            }
+
+            minorDropdown.disabled = false;
+            const minors = ubpmData.filter(item => item.program === selectedProgram).map(item => item.minor).filter(minor => minor);
+            const uniqueMinors = [...new Set(minors)];
+
+            uniqueMinors.forEach(minor => {
+                const option = document.createElement("option");
+                option.value = minor;
+                option.textContent = minor;
+                minorDropdown.appendChild(option);
+            });
         }
 
         // Enable Semester Selection
         function enableSemesterSelection() {
-            selectedUBPM_ID = document.getElementById("ubpm").value;
-            document.getElementById("semester").disabled = !selectedUBPM_ID;
-        }
-
-        // Populate Semester Dropdown (Static 1 to 8)
-        function populateSemesters() {
+            selectedMinor = document.getElementById("minor").value;
             const semesterDropdown = document.getElementById("semester");
-            for (let i = 1; i <= 8; i++) {
-                const option = document.createElement("option");
-                option.value = i;
-                option.textContent = `Semester ${i}`;
-                semesterDropdown.appendChild(option);
+            
+            if (!selectedDepartment || !selectedProgram || !selectedMinor) {
+                semesterDropdown.disabled = true;
+                return;
             }
+
+            // Get the UBPM ID based on the selected department, program, and minor
+            selectedUBPMID = ubpmData.find(item => 
+                item.department === selectedDepartment && 
+                item.program === selectedProgram && 
+                item.minor === selectedMinor
+            )?.UBPM_ID;
+
+            semesterDropdown.disabled = false;
         }
 
-        // Fetch Subjects
+        // Fetch Subjects based on UBPM ID and Semester
         function fetchSubjects() {
             const semester = document.getElementById("semester").value;
-            if (!selectedUBPM_ID || !semester) return;
+            if (!selectedUBPMID || !semester) return;
 
-            fetch(`http://localhost:5000/api/subjects/${selectedUBPM_ID}/${semester}`)
+            fetch(`http://localhost:5000/api/subjects/${selectedUBPMID}/${semester}`)
                 .then(response => response.json())
                 .then(data => {
                     subjects = data;
                     updateSubjectTable("subject-table", subjects);
                 });
+        }
+
+        // Update Subject Table (For Regular or Optional Subjects)
+        function updateSubjectTable(tableId, subjectList) {
+            const table = document.getElementById(tableId);
+            table.innerHTML = "";
+            subjectList.forEach(subject => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${subject.subject_name}</td>
+                    <td>${subject.subject_cred}</td>
+                    <td><select class="grade-input">
+                        <option value="">-- Select Grade --</option>
+                        <option value="O">O (10)</option>
+                        <option value="A+">A+ (9)</option>
+                        <option value="A">A (8)</option>
+                        <option value="B+">B+ (7)</option>
+                        <option value="B">B (6)</option>
+                        <option value="C">C (5)</option>
+                        <option value="F">F (0)</option>
+                    </select></td>
+                `;
+                table.appendChild(row);
+            });
         }
 
         // Fetch Optional Subjects
@@ -185,30 +294,6 @@
             updateSubjectTable("optional-subject-table", optionalSubjects);
         }
 
-        // Update Subject Table (For Regular or Optional Subjects)
-        function updateSubjectTable(tableId, subjectList) {
-            const table = document.getElementById(tableId);
-            table.innerHTML = "";
-            subjectList.forEach(subject => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${subject.subject_name}</td>
-                    <td>${subject.subject_cred}</td>
-                    <td><select class="grade-input">
-                        <option value="">-- Select Grade --</option>
-                        <option value="O">O (10)</option>
-                        <option value="A+">A+ (9)</option>
-                        <option value="A">A (8)</option>
-                        <option value="B+">B+ (7)</option>
-                        <option value="B">B (6)</option>
-                        <option value="C">C (5)</option>
-                        <option value="F">F (0)</option>
-                    </select></td>
-                `;
-                table.appendChild(row);
-            });
-        }
-
         // Calculate CGPA
         function calculateCGPA() {
             const gradeInputs = document.querySelectorAll(".grade-input");
@@ -239,8 +324,8 @@
             document.getElementById("cgpa-result").textContent = cgpa;
         }
 
+        // Initial Fetch
         fetchUBPM();
-        populateSemesters();
         fetchOptionalSubjects();
     </script>
 </body>
