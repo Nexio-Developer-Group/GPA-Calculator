@@ -4,15 +4,22 @@ const mysql = require('mysql2/promise');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
+
+// Allow only your frontend to access the API
+app.use(cors({
+    origin: 'http://localhost:3000', // Change this to your frontend URL if deployed
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type']
+}));
+
 app.use(express.json());
 
 // Create MySQL connection pool
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'root',
-    database: process.env.DB_NAME || 'Universitydb1',
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
@@ -93,3 +100,4 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
+
