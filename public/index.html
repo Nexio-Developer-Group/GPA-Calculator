@@ -38,27 +38,11 @@
         <i class="bi bi-mortarboard"></i>  GPA Calculator
     </h2>
 
-    <!-- Department Selection -->
+    <!-- Department & Program Selection -->
     <div class="mb-3">
-        <label for="department" class="form-label">Select Department:</label>
-        <select id="department" class="form-select" onchange="updateProgramOptions()">
+        <label for="ubpm" class="form-label">Select Department & Program:</label>
+        <select id="ubpm" class="form-select" onchange="enableSemesterSelection()">
             <option value="">-- Select --</option>
-        </select>
-    </div>
-
-    <!-- Program Selection -->
-    <div class="mb-3">
-        <label for="program" class="form-label">Select Program:</label>
-        <select id="program" class="form-select" onchange="updateMinorOptions()" disabled>
-            <option value="">-- Select Program --</option>
-        </select>
-    </div>
-
-    <!-- Minor Selection -->
-    <div class="mb-3">
-        <label for="minor" class="form-label">Select Minor:</label>
-        <select id="minor" class="form-select" disabled>
-            <option value="">-- Select Minor --</option>
         </select>
     </div>
 
@@ -119,9 +103,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     let selectedUBPM_ID = null;
-    let selectedDepartment = null;
-    let selectedProgram = null;
-    let selectedMinor = null;
     let subjects = [];
     let optionalSubjects = [];
 
@@ -133,56 +114,19 @@
         fetch('http://40.81.232.21:5000/api/ubpm')
             .then(response => response.json())
             .then(data => {
-                const departmentDropdown = document.getElementById("department");
+                const ubpmDropdown = document.getElementById("ubpm");
                 data.forEach(item => {
                     const option = document.createElement("option");
                     option.value = item.UBPM_ID;
-                    option.textContent = item.department;
-                    departmentDropdown.appendChild(option);
+                    option.textContent = `${item.department} - ${item.program} (${item.minor || "No Minor"})`;
+                    ubpmDropdown.appendChild(option);
                 });
             });
     }
 
-    function updateProgramOptions() {
-        const departmentDropdown = document.getElementById("department");
-        selectedDepartment = departmentDropdown.value;
-
-        const programDropdown = document.getElementById("program");
-        programDropdown.innerHTML = '<option value="">-- Select Program --</option>';
-        programDropdown.disabled = false;
-
-        fetch('http://localhost:5000/api/ubpm')
-            .then(response => response.json())
-            .then(data => {
-                data.filter(item => item.department === selectedDepartment).forEach(item => {
-                    const option = document.createElement("option");
-                    option.value = item.program;
-                    option.textContent = item.program;
-                    programDropdown.appendChild(option);
-                });
-            });
-    }
-
-    function updateMinorOptions() {
-        const programDropdown = document.getElementById("program");
-        selectedProgram = programDropdown.value;
-
-        const minorDropdown = document.getElementById("minor");
-        minorDropdown.innerHTML = '<option value="">-- Select Minor --</option>';
-        minorDropdown.disabled = false;
-
-        fetch('http://localhost:5000/api/ubpm')
-            .then(response => response.json())
-            .then(data => {
-                data.filter(item => item.program === selectedProgram).forEach(item => {
-                    if (item.minor) {
-                        const option = document.createElement("option");
-                        option.value = item.minor;
-                        option.textContent = item.minor;
-                        minorDropdown.appendChild(option);
-                    }
-                });
-            });
+    function enableSemesterSelection() {
+        selectedUBPM_ID = document.getElementById("ubpm").value;
+        document.getElementById("semester").disabled = !selectedUBPM_ID;
     }
 
     function populateSemesters() {
