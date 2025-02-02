@@ -111,7 +111,7 @@
     };
 
     function fetchUBPM() {
-        fetch('http://localhost:5000/api/ubpm')
+        fetch('http://40.81.232.21:5000/api/ubpm')
             .then(response => response.json())
             .then(data => {
                 const ubpmDropdown = document.getElementById("ubpm");
@@ -143,7 +143,7 @@
         const semester = document.getElementById("semester").value;
         if (!selectedUBPM_ID || !semester) return;
 
-        fetch(`http://localhost:5000/api/subjects/${selectedUBPM_ID}/${semester}`)
+        fetch(`http://40.81.232.21:5000/api/subjects/${selectedUBPM_ID}/${semester}`)
             .then(response => response.json())
             .then(data => {
                 subjects = data;
@@ -152,7 +152,7 @@
     }
 
     function fetchOptionalSubjects() {
-        fetch('http://localhost:5000/api/opt-subjects')
+        fetch('http://40.81.232.21:5000/api/opt-subjects')
             .then(response => response.json())
             .then(data => {
                 const optionalSubjectsDiv = document.getElementById("optional-subjects");

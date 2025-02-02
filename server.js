@@ -7,7 +7,7 @@ const app = express();
 
 // Allow only your frontend to access the API
 app.use(cors({
-    origin: 'http://localhost:3000', // Change this to your frontend URL if deployed
+    origin: 'http://40.81.232.21:3000', // Change this to your frontend URL if deployed
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type']
 }));
@@ -97,7 +97,7 @@ app.use((err, req, res, next) => {
 
 // Start the server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT,"0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
 
