@@ -373,7 +373,7 @@
 
         // Fetch Optional Subjects and Show Apply Button
         function fetchOptionalSubjects() {
-            fetch('http://40.81.232.21:5000/api/opt     -subjects')
+            fetch('http://40.81.232.21:5000/api/opt-subjects')
                 .then(response => response.json())
                 .then(data => {
                     const optionalSubjectsDiv = document.getElementById("optional-subjects");
